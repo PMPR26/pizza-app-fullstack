@@ -23,12 +23,12 @@ class UpdatePizzaRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'=>'required|string|max:255',
-            'description'=>'required|string|max:255',
-            'price'=>'required|numeric|min:0',
-            'image'=>'required|string',
-            'ingredients'=>'required|array',
-            'ingredients.*'=>'required|exists:ingredients,id',
+            'name' => 'sometimes|string|max:255',
+            'description' => 'sometimes|string|max:255',
+            'price' => 'sometimes|numeric|min:0',
+            'image' => 'sometimes|string',
+            'ingredients' => 'sometimes|array',
+            'ingredients.*' => 'exists:ingredients,id',
         ];
     }
 }
