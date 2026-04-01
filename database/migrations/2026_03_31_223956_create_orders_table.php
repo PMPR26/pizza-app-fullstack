@@ -15,7 +15,9 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('pizza_id')->constrained()->cascadeOnDelete();
-            $table->timestamp('ordered_at');
+            $table->integer('quantity')->default(1);
+            $table->decimal('total', 8, 2);
+            $table->timestamp('ordered_at')->useCurrent();
             $table->timestamps();
         });
     }
