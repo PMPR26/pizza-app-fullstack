@@ -133,3 +133,21 @@
 .pizza-card__button:hover {
   background-color: #047857;
 }
+.pizza-card__ingredients {
+  margin: 10px 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #f9fafb;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.pizza-card__ingredients ul {
+  margin-top: 6px;
+  padding-left: 18px;
+}
+
+.pizza-card__ingredients li {
+  list-style: disc;
+  margin-bottom: 4px;
+}
