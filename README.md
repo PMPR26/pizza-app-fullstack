@@ -6,6 +6,9 @@ Aplicación fullstack para gestión de pedidos de pizzas, desarrollada con:
 * 🎨 Frontend: Vue 3 + Vite + Tailwind CSS
 * 🗄️ Base de datos: MySQL/PostgreSQL
 
+## 🎥 Demo de la aplicación
+
+[![Ver demo Pizza App](https://img.youtube.com/vi/vbNVg2kw9Bo/hqdefault.jpg)](https://www.youtube.com/watch?v=vbNVg2kw9Bo)
 ---
 
 ## 📁 Estructura del proyecto
