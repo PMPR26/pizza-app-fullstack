@@ -8,8 +8,9 @@ Aplicación fullstack para gestión de pedidos de pizzas, desarrollada con:
 
 ## 🎥 Demo de la aplicación
 
-[![Ver demo Pizza App](https://img.youtube.com/vi/vbNVg2kw9Bo/hqdefault.jpg)](https://www.youtube.com/watch?v=vbNVg2kw9Bo)
----
+<a href="https://www.youtube.com/watch?v=vbNVg2kw9Bo" target="_blank">
+  <img src="https://img.youtube.com/vi/vbNVg2kw9Bo/hqdefault.jpg" alt="Ver demo Pizza App">
+</a>
 
 ## 📁 Estructura del proyecto
 
