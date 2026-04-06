@@ -8,7 +8,7 @@ import MyOrdersView from '@/views/MyOrdersView.vue'
 import AdminView from '@/views/AdminView.vue'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/pizza-app-fullstack/'),
   routes: [
     { path: '/', name: 'home', component: HomeView },
     { path: '/login', name: 'login', component: LoginView, meta: { guest: true } },
