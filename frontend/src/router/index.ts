@@ -22,7 +22,11 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   if (!auth.user && auth.token) {
-    await auth.fetchMe()
+     try {
+      await auth.fetchMe()
+    } catch (error) {
+      console.error('Backend no disponible')
+    }
   }
 
   if (to.meta.auth && !auth.isAuthenticated) {
