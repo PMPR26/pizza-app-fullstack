@@ -7,7 +7,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-base: '/pizza-app-fullstack/',
+  base: '/pizza-app-fullstack/',
   plugins: [
     vue(),
     vueDevTools(),
@@ -16,6 +16,15 @@ base: '/pizza-app-fullstack/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://pizza-app-fullstack-production.up.railway.app',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
 })
