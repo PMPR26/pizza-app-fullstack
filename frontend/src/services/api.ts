@@ -3,9 +3,8 @@ import axios from 'axios'
 const BASE_URL = import.meta.env.VITE_API_URL
 
 export const api = axios.create({
-   baseURL: '/api',
-
-    withCredentials: true,
+  baseURL: BASE_URL,
+  withCredentials: false,
   headers: {
     Accept: 'application/json',
   },
