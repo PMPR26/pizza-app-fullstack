@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Fruitcake\Cors\HandleCors;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withEvents(discover: false)
@@ -15,7 +16,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'cors' => HandleCors::class,
         ]);
+         $middleware->prepend(HandleCors::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
