@@ -10,11 +10,11 @@ permissions:
   id-token: write
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout rama frontend
+      - name: Checkout frontend-only
         uses: actions/checkout@v4
         with:
           ref: frontend-only
@@ -24,16 +24,24 @@ jobs:
         with:
           node-version: 20
 
-      - name: Instalar dependencias
+      - name: Install deps
+        working-directory: frontend
         run: npm install
 
       - name: Build Vue
+        working-directory: frontend
         run: npm run build
 
       - name: Upload dist
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: frontend/dist
 
-      - name: Deploy Pages
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+    steps:
+      - name: Deploy
         uses: actions/deploy-pages@v4
