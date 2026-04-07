@@ -2,16 +2,16 @@ FROM richarvey/nginx-php-fpm:latest
 
 WORKDIR /var/www/html
 
-# 1. Copiamos los archivos que están en la raíz del contexto actual
-COPY composer.json composer.lock ./
+# 1. Copiamos especificando la ruta desde la raíz del repo
+COPY backend/composer.json backend/composer.lock ./
 
 # 2. Instalamos dependencias
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# 3. Copiamos todo lo que hay en la carpeta actual
-COPY . .
+# 3. Copiamos todo el contenido de la carpeta backend al contenedor
+COPY backend/. .
 
-# 4. Corregimos el formato de variables para que el log no se queje
+# 4. Variables con formato '=' (Para quitar los errores del log)
 ENV WEBROOT=/var/www/html/public
 ENV PHP_ERRORS_STDERR=1
 ENV REAL_IP_HEADER=1
@@ -22,5 +22,5 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 
 EXPOSE 80
 
-# 6. Ejecutamos caché, migraciones y arrancamos
+# 6. Comando de arranque: Caché + Migraciones + Script de la imagen
 CMD php artisan route:cache && php artisan migrate --force && /start.sh
