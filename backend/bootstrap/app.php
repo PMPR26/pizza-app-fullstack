@@ -15,10 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
-            'cors' => \Illuminate\Http\Middleware\HandleCors::class,
-
+            ]);
+       $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'sanctum/csrf-cookie',
         ]);
-         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
+        $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
