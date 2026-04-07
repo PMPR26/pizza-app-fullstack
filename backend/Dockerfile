@@ -1,7 +1,7 @@
-# 1. Base ligera de Alpine
+# 1. Base ligera
 FROM php:8.3-fpm-alpine
 
-# 2. Dependencias del sistema (Instalación limpia)
+# 2. Dependencias del sistema (LIMPIEZA TOTAL: SIN POSTGRES)
 RUN apk add --no-cache \
     nginx \
     libpng-dev \
@@ -11,42 +11,42 @@ RUN apk add --no-cache \
     unzip \
     curl \
     oniguruma-dev \
-    postgresql-dev \
     mariadb-client \
     linux-headers \
     $PHPIZE_DEPS
 
-# 3. Extensiones PHP (Solo las estrictamente necesarias para Laravel)
-RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring gd zip bcmath
+# 3. Extensiones PHP (SOLO MYSQL PARA AHORRAR RAM)
+RUN docker-php-ext-install pdo pdo_mysql mbstring gd zip bcmath
 
 # 4. Traemos Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# 5. Copiamos los archivos del proyecto
+# 5. Copiamos los archivos
 COPY . .
 
-# 6. INSTALACIÓN DE EMERGENCIA (Evita el Error 4 de Memoria)
+# 6. INSTALACIÓN DE EMERGENCIA CON LÍMITE DE MEMORIA
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# Instalamos sin optimizar, sin plugins y sin scripts para ahorrar cada MB de RAM
-RUN composer install \
+# Forzamos a PHP a usar un límite de memoria bajo para que no choque con Render
+# Y desactivamos el caché de Composer para ahorrar RAM durante el build
+RUN php -d memory_limit=256M /usr/bin/composer install \
     --no-interaction \
     --no-plugins \
     --no-scripts \
     --no-dev \
     --prefer-dist \
-    --ignore-platform-reqs
+    --ignore-platform-reqs \
+    --no-cache
 
-# Generamos el autoloader estándar (No optimizado para no saturar la RAM)
-RUN composer dump-autoload --no-dev
+RUN php -d memory_limit=256M /usr/bin/composer dump-autoload --no-dev
 
-# 7. Permisos absolutos
+# 7. Permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 8. Configuración de Nginx
+# 8. Nginx
 RUN printf "server { \n\
     listen 80; \n\
     root /var/www/html/public; \n\
@@ -63,5 +63,4 @@ RUN printf "server { \n\
 
 EXPOSE 80
 
-# 9. Arranque: Limpieza de caché residual
 CMD php artisan config:clear && php artisan cache:clear && php-fpm -D && nginx -g "daemon off;"
