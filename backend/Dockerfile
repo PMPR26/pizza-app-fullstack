@@ -1,7 +1,7 @@
-# Usamos PHP 8.3 con FPM (la versión que pide tu código)
+# Usamos PHP 8.3 con FPM
 FROM php:8.3-fpm-alpine
 
-# Instalamos extensiones necesarias para Laravel y el servidor Nginx
+# Instalamos extensiones necesarias (Añadido mysql-client y dependencias)
 RUN apk add --no-cache \
     nginx \
     libpng-dev \
@@ -11,27 +11,26 @@ RUN apk add --no-cache \
     unzip \
     curl \
     oniguruma-dev \
-    postgresql-dev
+    postgresql-dev \
+    mariadb-client
 
-# Instalamos las extensiones de PHP para PostgreSQL y strings
-RUN docker-php-ext-install pdo pdo_pgsql mbstring gd zip
+# INSTALAMOS PDO_MYSQL (Crítico para Aiven)
+RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring gd zip
 
-# Instalamos Composer de la imagen oficial
+# Instalamos Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
-
-# Copiamos los archivos del proyecto
 COPY . .
 
-# Instalamos dependencias de Laravel ignorando restricciones de plataforma
+# Instalamos dependencias
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-interaction --optimize-autoloader --no-dev --ignore-platform-reqs
 
-# Permisos para las carpetas de Laravel
+# Permisos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Configuración básica de Nginx (para que escuche en el puerto 80)
+# Configuración Nginx
 RUN printf "server { \n\
     listen 80; \n\
     root /var/www/html/public; \n\
@@ -47,6 +46,4 @@ RUN printf "server { \n\
 }" > /etc/nginx/http.d/default.conf
 
 EXPOSE 80
-
-# Comando de arranque: Inicia PHP-FPM y Nginx al mismo tiempo
 CMD php-fpm -D && nginx -g "daemon off;"
