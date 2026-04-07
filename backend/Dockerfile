@@ -1,26 +1,28 @@
+# 1. Imagen base
 FROM richarvey/nginx-php-fpm:latest
 
+# 2. Directorio estándar del servidor web
 WORKDIR /var/www/html
 
-# 1. Copiamos los archivos de composer (SIN la palabra backend)
+# 3. Copiamos archivos (SIN la palabra backend, porque ya estamos ahí)
 COPY composer.json composer.lock ./
 
-# 2. Instalamos dependencias
+# 4. Instalamos dependencias
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# 3. Copiamos TODO lo que hay en la carpeta actual (.) al contenedor (.)
+# 5. Copiamos todo el código de la carpeta actual
 COPY . .
 
-# 4. Variables con formato correcto (=) para evitar warnings
+# 6. Formato corregido (usando =) para que Railway no se queje
 ENV WEBROOT=/var/www/html/public
 ENV PHP_ERRORS_STDERR=1
 ENV REAL_IP_HEADER=1
 ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# 5. Permisos para Laravel
+# 7. Permisos para Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 80
 
-# 6. Comando de arranque: Caché + Migraciones + Script de la imagen
+# 8. Comando de arranque
 CMD php artisan route:cache && php artisan migrate --force && /start.sh
