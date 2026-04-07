@@ -2,16 +2,16 @@ FROM richarvey/nginx-php-fpm:latest
 
 WORKDIR /var/www/html
 
-# 1. Copiamos especificando la ruta desde la raíz del repo
-COPY backend/composer.json backend/composer.lock ./
+# 1. Copiamos los archivos de composer (SIN la palabra backend)
+COPY composer.json composer.lock ./
 
 # 2. Instalamos dependencias
 RUN composer install --no-interaction --optimize-autoloader --no-dev
 
-# 3. Copiamos todo el contenido de la carpeta backend al contenedor
-COPY backend/. .
+# 3. Copiamos TODO lo que hay en la carpeta actual (.) al contenedor (.)
+COPY . .
 
-# 4. Variables con formato '=' (Para quitar los errores del log)
+# 4. Variables con formato correcto (=) para evitar warnings
 ENV WEBROOT=/var/www/html/public
 ENV PHP_ERRORS_STDERR=1
 ENV REAL_IP_HEADER=1
