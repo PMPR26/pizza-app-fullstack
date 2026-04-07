@@ -1,7 +1,7 @@
-# Usamos la imagen más reciente de PHP 8.3
+# 1. Usamos PHP 8.3 con FPM sobre Alpine (Ligero)
 FROM php:8.3-fpm-alpine
 
-# 1. Instalamos dependencias del sistema necesarias para Laravel moderno
+# 2. Instalamos librerías del sistema necesarias
 RUN apk add --no-cache \
     nginx \
     libpng-dev \
@@ -16,28 +16,30 @@ RUN apk add --no-cache \
     linux-headers \
     $PHPIZE_DEPS
 
-# 2. Instalamos TODAS las extensiones que requiere el composer.json moderno
-# Añadimos bcmath y facilitamos la compilación de extensiones
+# 3. Instalamos extensiones de PHP (Incluimos bcmath para Laravel 11/13)
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring gd zip bcmath pcntl
 
-# 3. Instalamos Composer (Versión 2.x por defecto)
+# 4. Instalamos Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-# 4. Copiamos los archivos del proyecto (Incluyendo tu composer.json original)
+# 5. Copiamos los archivos del proyecto
 COPY . .
 
-# 5. Instalamos dependencias RESPETANDO tu composer.lock
-# Usamos --ignore-platform-reqs solo por seguridad con las libs de sistema de Alpine
+# 6. Instalación de dependencias OPTIMIZADA PARA POCA RAM (Evita Exit Code 4)
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN composer install --no-interaction --optimize-autoloader --no-dev --ignore-platform-reqs
+# Instalamos primero sin optimizar el autoloader para no saturar la memoria de Render
+RUN composer install --no-interaction --no-dev --ignore-platform-reqs
 
-# 6. Permisos críticos para que Laravel pueda escribir logs y caché
+# Generamos el autoloader optimizado en un paso separado para ahorrar RAM
+RUN composer dump-autoload --optimize --no-dev
+
+# 7. Permisos CRÍTICOS para evitar Errores 500
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 7. Configuración de Nginx para Laravel
+# 8. Configuración de Nginx
 RUN printf "server { \n\
     listen 80; \n\
     root /var/www/html/public; \n\
@@ -54,5 +56,5 @@ RUN printf "server { \n\
 
 EXPOSE 80
 
-# 8. Comando de arranque: Limpieza de caché para asegurar que lea los Atributos de PHP 8.3
+# 9. Comando de arranque: Limpiamos caché antes de iniciar
 CMD php artisan config:clear && php artisan cache:clear && php-fpm -D && nginx -g "daemon off;"
