@@ -1,6 +1,6 @@
 FROM php:8.3-fpm-alpine
 
-# Instalamos extensiones necesarias
+# 1. Instalamos librerías del sistema
 RUN apk add --no-cache \
     nginx \
     libpng-dev \
@@ -13,35 +13,26 @@ RUN apk add --no-cache \
     postgresql-dev \
     mariadb-client
 
-# Instalamos drivers de base de datos
+# 2. Instalamos extensiones de PHP (MySQL es la clave aquí)
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring gd zip
 
-# Instalamos Composer
+# 3. Instalamos Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
+
+# 4. Copiamos los archivos del proyecto
 COPY . .
 
-# Optimizamos Composer
+# 5. Instalamos dependencias de PHP
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-interaction --optimize-autoloader --no-dev --ignore-platform-reqs
 
-# --- LO QUE FALTABA: CONFIGURACIÓN DE LARAVEL ---
-# Creamos un .env base si no existe para que Laravel no explote
-RUN cp .env.example .env || touch .env
-
-# Generamos las cachés de Laravel para mejorar velocidad y evitar errores 500
-# (Nota: La APP_KEY debe estar en las variables de Render)
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
-# -----------------------------------------------
-
-# Permisos CRÍTICOS para evitar el Error 500
+# 6. Permisos absolutos para evitar el Error 500
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Configuración Nginx
+# 7. Configuración de Nginx
 RUN printf "server { \n\
     listen 80; \n\
     root /var/www/html/public; \n\
@@ -57,4 +48,6 @@ RUN printf "server { \n\
 }" > /etc/nginx/http.d/default.conf
 
 EXPOSE 80
-CMD php-fpm -D && nginx -g "daemon off;"
+
+# 8. Comando de arranque: Limpiamos cualquier caché residual antes de iniciar
+CMD php artisan config:clear && php artisan cache:clear && php-fpm -D && nginx -g "daemon off;"
