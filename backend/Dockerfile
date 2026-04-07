@@ -1,7 +1,7 @@
-# 1. Usamos PHP 8.3 con FPM sobre Alpine (Ligero)
+# 1. Base ligera de Alpine
 FROM php:8.3-fpm-alpine
 
-# 2. Instalamos librerías del sistema necesarias
+# 2. Dependencias del sistema (Instalación limpia)
 RUN apk add --no-cache \
     nginx \
     libpng-dev \
@@ -16,10 +16,10 @@ RUN apk add --no-cache \
     linux-headers \
     $PHPIZE_DEPS
 
-# 3. Instalamos extensiones de PHP (Incluimos bcmath para Laravel 11/13)
-RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring gd zip bcmath pcntl
+# 3. Extensiones PHP (Solo las estrictamente necesarias para Laravel)
+RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring gd zip bcmath
 
-# 4. Instalamos Composer
+# 4. Traemos Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
@@ -27,15 +27,22 @@ WORKDIR /var/www/html
 # 5. Copiamos los archivos del proyecto
 COPY . .
 
-# 6. Instalación de dependencias OPTIMIZADA PARA POCA RAM (Evita Exit Code 4)
+# 6. INSTALACIÓN DE EMERGENCIA (Evita el Error 4 de Memoria)
 ENV COMPOSER_ALLOW_SUPERUSER=1
-# Instalamos primero sin optimizar el autoloader para no saturar la memoria de Render
-RUN composer install --no-interaction --no-dev --ignore-platform-reqs
 
-# Generamos el autoloader optimizado en un paso separado para ahorrar RAM
-RUN composer dump-autoload --optimize --no-dev
+# Instalamos sin optimizar, sin plugins y sin scripts para ahorrar cada MB de RAM
+RUN composer install \
+    --no-interaction \
+    --no-plugins \
+    --no-scripts \
+    --no-dev \
+    --prefer-dist \
+    --ignore-platform-reqs
 
-# 7. Permisos CRÍTICOS para evitar Errores 500
+# Generamos el autoloader estándar (No optimizado para no saturar la RAM)
+RUN composer dump-autoload --no-dev
+
+# 7. Permisos absolutos
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
     chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
@@ -56,5 +63,5 @@ RUN printf "server { \n\
 
 EXPOSE 80
 
-# 9. Comando de arranque: Limpiamos caché antes de iniciar
+# 9. Arranque: Limpieza de caché residual
 CMD php artisan config:clear && php artisan cache:clear && php-fpm -D && nginx -g "daemon off;"
