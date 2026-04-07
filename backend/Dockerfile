@@ -1,7 +1,6 @@
-# Usamos PHP 8.3 con FPM
 FROM php:8.3-fpm-alpine
 
-# Instalamos extensiones necesarias (Añadido mysql-client y dependencias)
+# Instalamos extensiones necesarias
 RUN apk add --no-cache \
     nginx \
     libpng-dev \
@@ -14,7 +13,7 @@ RUN apk add --no-cache \
     postgresql-dev \
     mariadb-client
 
-# INSTALAMOS PDO_MYSQL (Crítico para Aiven)
+# Instalamos drivers de base de datos
 RUN docker-php-ext-install pdo pdo_mysql pdo_pgsql mbstring gd zip
 
 # Instalamos Composer
@@ -23,12 +22,24 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY . .
 
-# Instalamos dependencias
+# Optimizamos Composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-interaction --optimize-autoloader --no-dev --ignore-platform-reqs
 
-# Permisos
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# --- LO QUE FALTABA: CONFIGURACIÓN DE LARAVEL ---
+# Creamos un .env base si no existe para que Laravel no explote
+RUN cp .env.example .env || touch .env
+
+# Generamos las cachés de Laravel para mejorar velocidad y evitar errores 500
+# (Nota: La APP_KEY debe estar en las variables de Render)
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+# -----------------------------------------------
+
+# Permisos CRÍTICOS para evitar el Error 500
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache && \
+    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
 # Configuración Nginx
 RUN printf "server { \n\
