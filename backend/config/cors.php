@@ -19,7 +19,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['https://pmpr26.github.io'],
+    'allowed_origins' => ['*'],
 
     'allowed_origins_patterns' => [],
 
