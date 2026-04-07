@@ -1,34 +1,28 @@
-# 1. Imagen base oficial de PHP
-FROM php:8.2-fpm-alpine
+# Base image
+FROM richarvey/nginx-php-fpm:latest
 
-# 2. Dependencias del sistema para Laravel y MySQL
-RUN apk add --no-cache \
-    libpng-dev \
-    libzip-dev \
-    zip \
-    unzip \
-    git \
-    curl \
-    oniguruma-dev \
-    && docker-php-ext-install pdo_mysql gd zip
-
-# 3. Instalar Composer desde la imagen oficial
-COPY --from=composer:latest /usr/local/bin/composer /usr/local/bin/composer
-
-# 4. Establecer el directorio de trabajo (Ruta estándar de Linux)
+# Set workdir
 WORKDIR /var/www/html
 
-# 5. Copiar los archivos (Como el Root Directory es 'backend', copiamos todo lo de esa carpeta)
+# 1. Copiamos los archivos directamente (porque el Root es 'backend')
+COPY composer.json composer.lock ./
+
+# 2. Instalamos dependencias
+RUN composer install --optimize-autoloader --no-dev
+
+# 3. Copiamos todo lo demás de la carpeta backend
 COPY . .
 
-# 6. Instalar las dependencias de Laravel (Esto DEBE tardar más de 30 segundos)
-RUN composer install --no-interaction --optimize-autoloader --no-dev
+# 4. Corregimos el formato de las variables (como pidió el log)
+ENV WEBROOT=/var/www/html/public
+ENV PHP_ERRORS_STDERR=1
+ENV REAL_IP_HEADER=1
+ENV COMPOSER_ALLOW_SUPERUSER=1
 
-# 7. Permisos de escritura para que Laravel no explote
+# Permisos para Laravel
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# 8. Exponer el puerto
-EXPOSE 8080
+EXPOSE 80
 
-# 9. COMANDO DE ARRANQUE (Sin el /app/ porque el WORKDIR es /var/www/html)
-CMD php artisan route:cache && php artisan migrate --force && php artisan serve --host 0.0.0.0 --port $PORT
+# El comando de arranque que incluye tus rutas y migraciones
+CMD php artisan route:cache && php artisan migrate --force && /start.sh
